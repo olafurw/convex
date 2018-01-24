@@ -35,6 +35,11 @@ class Convex
     {
         this.LogMessage(aMessage);
 
+        if (aMessage.channel.id !== locBotChannelId)
+        {
+            return;
+        }
+
         if (!aMessage.content.startsWith(locTrigger))
         {
             return;
@@ -46,6 +51,12 @@ class Convex
             return;
         }
 
+        if (aMessage.content.startsWith(locTrigger + 'source'))
+        {
+            this.HandleSource(aMessage);
+            return;
+        }
+
         if (aMessage.content.startsWith(locTrigger + 'role'))
         {
             this.HandleRole(aMessage.author, aMessage.guild, aMessage);
@@ -53,29 +64,27 @@ class Convex
         }
     }
 
+    HandleSource = (aMessage: Discord.Message): void =>
+    {
+        aMessage.reply(`
+You interested in programming? Cool, my source code is located at: https://github.com/olafurw/convex/tree/master`);
+    }
+
     HandleHelp = (aMessage: Discord.Message): void =>
     {
-        if (aMessage.channel.id !== locBotChannelId)
-        {
-            return;
-        }
-
         aMessage.reply(`
-Hi, I'm Convex!\n
-I have the following actions\n
-!role-add <channel-name>\n
-!role-delete <channel-name>\n
-For example !role-add the-division will add the division role and color to your account\n
+Hi, I'm Convex!
+I have the following actions
+!help (To see this listing)
+!source (Wanna see my source code?)
+!role-add <channel-name>
+!role-delete <channel-name>
+For example !role-add the-division will add the division role and color to your account
 Note that you can only have 1 color active`);
     }
 
     HandleRole = (aUser: Discord.User, aGuild: Discord.Guild, aMessage: Discord.Message): void =>
     {
-        if (aMessage.channel.id !== locBotChannelId)
-        {
-            return;
-        }
-
         const messageSplit = aMessage.content.split(' ');
         if(messageSplit.length < 2)
         {
@@ -85,6 +94,7 @@ Note that you can only have 1 color active`);
 
         const roleString = messageSplit[1];
         const action = messageSplit[0];
+        
         if (action !== '!role-add'
             && action !== '!role-delete')
         {
