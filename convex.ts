@@ -67,7 +67,7 @@ class Convex
     HandleSource = (aMessage: Discord.Message): void =>
     {
         aMessage.reply(`
-You interested in programming? Cool, my source code is located at: https://github.com/olafurw/convex/tree/master`);
+You interested in programming? Cool, my source code is located at: <https://github.com/olafurw/convex/tree/master>`);
     }
 
     HandleHelp = (aMessage: Discord.Message): void =>
