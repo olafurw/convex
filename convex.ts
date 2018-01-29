@@ -1,17 +1,15 @@
 import Discord = require("discord.js");
+import fs = require("fs");
 
 const locTrigger = '!';
-const locBotChannelId = '<add your bot channel id here>';
-const locToken = '<add your bot token here>';
+const locBotChannelId = '<bot-help-channel-id>';
 
 class Convex
 {
-    myToken: string;
     myClient: Discord.Client;
 
-    constructor(aToken: string)
+    constructor()
     {
-        this.myToken = aToken;
         this.myClient = new Discord.Client();
     }
 
@@ -23,7 +21,24 @@ class Convex
 
     Start = ():void =>
     {
-        this.myClient.login(this.myToken);
+        fs.readFile("bot.token", "utf8", (aErr, aData) => 
+        {
+            if (aErr)
+            {
+                console.error(aErr + " Error reading token file.");
+                return;
+            }
+
+            if (!aData)
+            {
+                console.error("Token file empty or invalid");
+                return;
+            }
+
+            this.myClient.login(aData);
+
+            return;
+        });
     }
 
     OnReady = ():void =>
@@ -35,55 +50,83 @@ class Convex
     {
         this.LogMessage(aMessage);
 
-        if (aMessage.channel.id !== locBotChannelId)
-        {
-            return;
-        }
-
         if (!aMessage.content.startsWith(locTrigger))
         {
             return;
         }
 
-        if (aMessage.content.startsWith(locTrigger + 'help'))
+        if (aMessage.channel.id === locBotChannelId)
         {
-            this.HandleHelp(aMessage);
+            this.BotChannel(aMessage);
             return;
         }
 
-        if (aMessage.content.startsWith(locTrigger + 'source'))
+        if (aMessage.content.startsWith(locTrigger + 'links'))
         {
-            this.HandleSource(aMessage);
-            return;
-        }
-
-        if (aMessage.content.startsWith(locTrigger + 'role'))
-        {
-            this.HandleRole(aMessage.author, aMessage.guild, aMessage);
+            this.Links(aMessage);
             return;
         }
     }
 
-    HandleSource = (aMessage: Discord.Message): void =>
+    BotChannel = (aMessage: Discord.Message): void =>
+    {
+        if (aMessage.content.startsWith(locTrigger + 'help'))
+        {
+            this.Help(aMessage);
+            return;
+        }
+        
+        if (aMessage.content.startsWith(locTrigger + 'source'))
+        {
+            this.Source(aMessage);
+            return;
+        }
+        
+        if (aMessage.content.startsWith(locTrigger + 'role'))
+        {
+            this.Role(aMessage.author, aMessage.guild, aMessage);
+            return;
+        }
+    }
+
+    Source = (aMessage: Discord.Message): void =>
     {
         aMessage.reply(`
 You interested in programming? Cool, my source code is located at: <https://github.com/olafurw/convex/tree/master>`);
     }
 
-    HandleHelp = (aMessage: Discord.Message): void =>
+    Links = (aMessage: Discord.Message): void =>
     {
-        aMessage.reply(`
-Hi, I'm Convex!
-I have the following actions
-!help (To see this listing)
-!source (Wanna see my source code?)
-!role-add <channel-name>
-!role-delete <channel-name>
-For example !role-add the-division will add the division role and color to your account
-Note that you can only have 1 color active`);
+        fs.readFile("links/" + aMessage.channel.id, "utf8", (aErr, aData) => 
+        {
+            if (aErr)
+            {
+                console.error(aMessage.channel.id + ' Channel Link Error: ' + aErr);
+                return;
+            }
+
+            aMessage.reply(aData);
+
+            return;
+        });
     }
 
-    HandleRole = (aUser: Discord.User, aGuild: Discord.Guild, aMessage: Discord.Message): void =>
+    Help = (aMessage: Discord.Message): void =>
+    {
+        aMessage.reply(`
+Hi, I'm Convex! Meow!
+
+I have the following actions:
+\`!help\` To see this listing
+\`!source\` Wanna see my source code?
+\`!role-add <channel-name>\`
+\`!role-delete <channel-name>\`
+
+For example \`!role-add the-division\` will add the division role and color to your account.
+Note that you can only have 1 color active!`);
+    }
+
+    Role = (aUser: Discord.User, aGuild: Discord.Guild, aMessage: Discord.Message): void =>
     {
         const messageSplit = aMessage.content.split(' ');
         if(messageSplit.length < 2)
@@ -94,7 +137,7 @@ Note that you can only have 1 color active`);
 
         const roleString = messageSplit[1];
         const action = messageSplit[0];
-        
+
         if (action !== '!role-add'
             && action !== '!role-delete')
         {
@@ -144,10 +187,10 @@ Note that you can only have 1 color active`);
     LogMessage = (aMessage: Discord.Message):void =>
     {
         // @ts-ignore
-        console.log(`${aMessage.createdTimestamp.toString()} ${aMessage.channel.name} - ${aMessage.author.toString()} - ${aMessage.content}`);
+        console.log(`${aMessage.createdTimestamp.toString()} ${aMessage.channel.id} - ${aMessage.author.toString()} - ${aMessage.content}`);
     }
 }
 
-var convex = new Convex(locToken);
+var convex = new Convex();
 convex.Setup();
 convex.Start();
