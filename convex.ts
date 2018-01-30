@@ -2,7 +2,8 @@ import Discord = require("discord.js");
 import fs = require("fs");
 
 const locTrigger = '!';
-const locBotChannelId = '<bot-help-channel-id>';
+const locBotChannelId = '405810591593398284';
+const locBotTestingId = '405780986228637696';
 
 class Convex
 {
@@ -61,6 +62,12 @@ class Convex
             return;
         }
 
+        if (aMessage.channel.id === locBotTestingId)
+        {
+            this.BotTesting(aMessage);
+            return;
+        }
+
         if (aMessage.content.startsWith(locTrigger + 'links'))
         {
             this.Links(aMessage);
@@ -89,6 +96,15 @@ class Convex
         }
     }
 
+    BotTesting = (aMessage: Discord.Message): void =>
+    {
+        if (aMessage.content.startsWith(locTrigger + 'alive'))
+        {
+            aMessage.reply("I am alive. Meow");
+            return;
+        }   
+    }
+
     Source = (aMessage: Discord.Message): void =>
     {
         aMessage.reply(`
@@ -105,7 +121,15 @@ You interested in programming? Cool, my source code is located at: <https://gith
                 return;
             }
 
-            aMessage.reply(aData);
+            aMessage.reply({embed: {
+                color: 3447003,
+                fields: [
+                    {
+                        name: "Links",
+                        value: aData
+                    }
+                ]
+            }});
 
             return;
         });
