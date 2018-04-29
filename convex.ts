@@ -4,10 +4,12 @@ import fs = require("fs");
 const locTrigger = '!';
 const locBotChannelId = '405810591593398284';
 const locBotTestingId = '405780986228637696';
+const locLogChatId = '440176099608100865';
 
 class Convex
 {
     myClient: Discord.Client;
+    myLogChannel: Discord.TextChannel;
 
     constructor()
     {
@@ -44,6 +46,8 @@ class Convex
 
     OnReady = ():void =>
     {
+        this.myLogChannel = this.myClient.channels.get(locLogChatId) as Discord.TextChannel;
+
         console.log(`Logged in as ${this.myClient.user.tag}`);
     }
 
@@ -210,8 +214,13 @@ Note that you can only have 1 color active!`);
 
     LogMessage = (aMessage: Discord.Message):void =>
     {
-        // @ts-ignore
-        console.log(`${aMessage.createdTimestamp.toString()} ${aMessage.channel.id} - ${aMessage.author.toString()} - ${aMessage.content}`);
+        if (aMessage.channel.id === locLogChatId
+            || !this.myLogChannel)
+        {
+            return;
+        }
+
+        this.myLogChannel.send(`${aMessage.channel} - ${aMessage.author} - ${aMessage.content}`);
     }
 }
 
