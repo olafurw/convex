@@ -5,15 +5,21 @@ const locTrigger = '!';
 const locBotChannelId = '405810591593398284';
 const locBotTestingId = '405780986228637696';
 const locLogChatId = '440176099608100865';
+const locServerInviteUrl = 'https://discord.gg/ngon';
+const locMessageLimitSec = 60;
 
 class Convex
 {
     myClient: Discord.Client;
     myLogChannel: Discord.TextChannel;
+    myLastInviteMessage: number;
+    myLastNgonMessage: number;
 
     constructor()
     {
         this.myClient = new Discord.Client();
+        this.myLastInviteMessage = 0;
+        this.myLastNgonMessage = 0;
     }
 
     Setup = ():void =>
@@ -55,28 +61,82 @@ class Convex
     {
         this.LogMessage(aMessage);
 
-        if (!aMessage.content.startsWith(locTrigger))
+        const startsWithTrigger:boolean = aMessage.content.startsWith(locTrigger);
+
+        if (startsWithTrigger
+            && aMessage.content.startsWith(locTrigger + 'invite'))
         {
+            this.ShowInvite(aMessage);
             return;
         }
 
-        if (aMessage.channel.id === locBotChannelId)
+        if (startsWithTrigger
+            && aMessage.content.startsWith(locTrigger + 'ngon'))
+        {
+            this.ShowNgon(aMessage);
+            return;
+        }
+
+        if (startsWithTrigger
+            && aMessage.channel.id === locBotChannelId)
         {
             this.BotChannel(aMessage);
             return;
         }
 
-        if (aMessage.channel.id === locBotTestingId)
+        if (startsWithTrigger
+            && aMessage.channel.id === locBotTestingId)
         {
             this.BotTesting(aMessage);
             return;
         }
 
-        if (aMessage.content.startsWith(locTrigger + 'links'))
+        if (startsWithTrigger
+            && aMessage.content.startsWith(locTrigger + 'links'))
         {
             this.Links(aMessage);
             return;
         }
+
+        this.FilterUnwantedContent(aMessage);
+    }
+
+    ShowInvite = (aMessage: Discord.Message): void =>
+    {
+        const nowTimestamp:number = Date.now() / 1000;
+        if (nowTimestamp < this.myLastInviteMessage + locMessageLimitSec)
+        {
+            return;
+        }
+
+        this.myLastInviteMessage = nowTimestamp;
+        aMessage.reply(locServerInviteUrl);
+        return;
+    }
+
+    ShowNgon = (aMessage: Discord.Message): void =>
+    {
+        const nowTimestamp:number = Date.now() / 1000;
+        if (nowTimestamp < this.myLastNgonMessage + locMessageLimitSec)
+        {
+            return;
+        }
+
+        this.myLastNgonMessage = nowTimestamp;
+        aMessage.reply({embed: {
+            color: 3447003,
+            fields: [
+                {
+                    name: "NGON - On The Internet",
+                    value: `
+- [Twitter](https://twitter.com/NGONGaming/)
+- [Twitch](https://www.twitch.tv/ngon/)
+- [YouTube](https://www.youtube.com/channel/UCkrJcaCnr5G7SInfjK-PFDg)
+- [SoundCloud](https://soundcloud.com/ngongaming)`
+                }
+            ]
+        }});
+        return;
     }
 
     BotChannel = (aMessage: Discord.Message): void =>
@@ -137,6 +197,27 @@ You interested in programming? Cool, my source code is located at: <https://gith
 
             return;
         });
+    }
+
+    FilterUnwantedContent = (aMessage: Discord.Message): void =>
+    {
+        if (aMessage.channel.id === locLogChatId
+            || aMessage.author.id == this.myClient.user.id)
+        {
+            return;
+        }
+
+        if (aMessage.content.includes("discord.gg/"))
+        {
+            aMessage.delete();
+            return;
+        }
+
+        if (aMessage.content.includes("discordapp.com/invite"))
+        {
+            aMessage.delete();
+            return;
+        }
     }
 
     Help = (aMessage: Discord.Message): void =>
@@ -220,7 +301,14 @@ Note that you can only have 1 color active!`);
             return;
         }
 
-        this.myLogChannel.send(`${aMessage.channel} - ${aMessage.author} - ${aMessage.content}`);
+        if (this.myLogChannel.members.has(aMessage.author.id))
+        {
+            this.myLogChannel.send(`${aMessage.channel} - ${aMessage.author.username} - ${aMessage.content}`);
+        }
+        else
+        {
+            this.myLogChannel.send(`${aMessage.channel} - ${aMessage.author} - ${aMessage.content}`);
+        }
     }
 }
 
